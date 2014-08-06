@@ -1,0 +1,178 @@
+/////////////////CREATE TABLE TASTES/////////////
+
+mysql> CREATE TABLE TASTES(
+    -> name CHAR(20) NOT NULL,
+    -> Filling CHAR(20) NOT NULL
+    -> );
+Query OK, 0 rows affected (0.38 sec)
+
+mysql> INSERT INTO TASTES VALUES("Brown","Turkey");
+Query OK, 1 row affected (0.00 sec)
+
+mysql> INSERT INTO TASTES VALUES("Brown","Beef");
+Query OK, 1 row affected (0.00 sec)
+
+mysql> INSERT INTO TASTES VALUES("Brown","Ham");
+Query OK, 1 row affected (0.01 sec)
+
+mysql> INSERT INTO TASTES VALUES("Jones","Cheese");
+Query OK, 1 row affected (0.00 sec)
+
+mysql> INSERT INTO TASTES VALUES("Green","Beef");
+Query OK, 1 row affected (0.01 sec)
+
+mysql> INSERT INTO TASTES VALUES("Green","Turkey");
+Query OK, 1 row affected (0.00 sec)
+
+mysql> INSERT INTO TASTES VALUES("Green","Cheese");
+Query OK, 1 row affected (0.00 sec)
+
+mysql> SELECT * FROM TASTES;
++-------+---------+
+| name  | Filling |
++-------+---------+
+| Brown | Turkey  |
+| Brown | Beef    |
+| Brown | Ham     |
+| Jones | Cheese  |
+| Green | Beef    |
+| Green | Turkey  |
+| Green | Cheese  |
++-------+---------+
+7 rows in set (0.00 sec)
+
+//////////////////CREATE TABLE Locations/////////////
+
+mysql> CREATE TABLE LOCATIONS(
+    -> Lname CHAR(20) PRIMARY KEY,
+    -> PHONE int(10),
+    -> ADDRESS VARCHAR(50)
+    -> );
+Query OK, 0 rows affected (0.35 sec)
+
+mysql> INSERT INTO LOCATIONS VALUES("Lincoln","6834523","Lincoln Place");
+Query OK, 1 row affected (0.00 sec)
+
+mysql> INSERT INTO LOCATIONS VALUES("O'Neill's","6742134","Pearse St");
+Query OK, 1 row affected (0.01 sec)
+
+mysql> INSERT INTO LOCATIONS VALUES("Old Nag","7678132","Dame St");
+Query OK, 1 row affected (0.00 sec)
+
+mysql> INSERT INTO LOCATIONS VALUES("Buttery","7023421","College St");
+Query OK, 1 row affected (0.01 sec)
+
+mysql> SELECT * FROM LOCATIONS;
++-----------+---------+---------------+
+| Lname     | PHONE   | ADDRESS       |
++-----------+---------+---------------+
+| Buttery   | 7023421 | College St    |
+| Lincoln   | 6834523 | Lincoln Place |
+| O'Neill's | 6742134 | Pearse St     |
+| Old Nag   | 7678132 | Dame St       |
++-----------+---------+---------------+
+4 rows in set (0.00 sec)
+
+///////////////////Create Table Sandwiches////////////////
+mysql> CREATE TABLE SANDWICHES (
+    -> Location CHAR(20),
+    -> Bread CHAR(20),
+    -> Filling CHAR(20),
+    -> Price DECIMAL(3,2),
+    -> FOREIGN KEY (Location) REFERENCES LOCATIONS(Lname)
+    -> );
+Query OK, 0 rows affected (0.10 sec)
+
+mysql> INSERT INTO SANDWICHES VALUES ("Lincoln","Rye","Ham","1.25");
+Query OK, 1 row affected (0.01 sec)
+
+mysql> INSERT INTO SANDWICHES VALUES ("O'Neill's","White","Cheese","1.20");
+Query OK, 1 row affected (0.00 sec)
+
+mysql> INSERT INTO SANDWICHES VALUES ("O'Neill's","Whole","Ham","1.25");
+Query OK, 1 row affected (0.00 sec)
+
+mysql> INSERT INTO SANDWICHES VALUES ("Old Nag","Rye","Beef","1.35");
+Query OK, 1 row affected (0.00 sec)
+
+mysql> INSERT INTO SANDWICHES VALUES ("Buttery","White","Cheese","1.00");
+Query OK, 1 row affected (0.01 sec)
+
+mysql> INSERT INTO SANDWICHES VALUES ("O'Neill's","White","Turkey","1.35");
+Query OK, 1 row affected (0.00 sec)
+
+mysql> INSERT INTO SANDWICHES VALUES ("Buttery","White","Ham","1.10");
+Query OK, 1 row affected (0.01 sec)
+
+mysql> INSERT INTO SANDWICHES VALUES ("Lincoln","Rye","Beef","1.35");
+Query OK, 1 row affected (0.00 sec)
+
+mysql> INSERT INTO SANDWICHES VALUES ("Lincoln","White","Ham","1.30");
+Query OK, 1 row affected (0.00 sec)
+
+mysql> INSERT INTO SANDWICHES VALUES ("Old Nag","Rye","Ham","1.40");
+Query OK, 1 row affected (0.00 sec)
+
+mysql> SELECT * FROM SANDWICHES;
++-----------+-------+---------+-------+
+| Location  | Bread | Filling | Price |
++-----------+-------+---------+-------+
+| Lincoln   | Rye   | Ham     |  1.25 |
+| O'Neill's | White | Cheese  |  1.20 |
+| O'Neill's | Whole | Ham     |  1.25 |
+| Old Nag   | Rye   | Beef    |  1.35 |
+| Buttery   | White | Cheese  |  1.00 |
+| O'Neill's | White | Turkey  |  1.35 |
+| Buttery   | White | Ham     |  1.10 |
+| Lincoln   | Rye   | Beef    |  1.35 |
+| Lincoln   | White | Ham     |  1.30 |
+| Old Nag   | Rye   | Ham     |  1.40 |
++-----------+-------+---------+-------+
+10 rows in set (0.00 sec)
+
+//////////(i) places where Jones can eat (using a nested subquery). 
+SELECT DISTINCT Location 
+FROM SANDWICHES 
+WHERE Location IN  
+(SELECT Location 
+FROM SANDWICHES
+WHERE Filling = ( SELECT Filling FROM TASTES
+WHERE Name = "Jones"));
++-----------+
+| Location  |
++-----------+
+| Buttery   |
+| O'Neill's |
++-----------+
+2 rows in set (0.00 sec)
+
+//////////(ii) places where Jones can eat (without using a nested subquery). 
+
+SELECT DISTINCT s.Location  
+    -> FROM SANDWICHES AS s INNER JOIN TASTES AS t
+    -> ON s.Filling = t.Filling
+    -> WHERE t.Name = "Jones";
++-----------+
+| Location  |
++-----------+
+| O'Neill's |
+| Buttery   |
++-----------+
+2 rows in set (0.00 sec)
+
+////////(iii) for each location the number of people who can eat there. 
+mysql> SELECT Location,Count(*) 
+FROM (SELECT DISTINCT Location,name 
+FROM SANDWICHES INNER JOIN TASTES 
+ON SANDWICHES.Filling = Tastes.Filling 
+ORDER BY(Location)) AS DERIVED_TABLE 
+GROUP BY(Location);
++-----------+----------+
+| Location  | Count(*) |
++-----------+----------+
+| Buttery   |        3 |
+| Lincoln   |        2 |
+| O'Neill's |        3 |
+| Old Nag   |        2 |
++-----------+----------+
+4 rows in set (0.00 sec)
